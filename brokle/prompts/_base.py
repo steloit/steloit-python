@@ -14,7 +14,7 @@ import asyncio
 import threading
 from typing import Any, Dict, Optional
 
-from .._http import AsyncHTTPClient, SyncHTTPClient, unwrap_response
+from .._http import AsyncHTTPClient, SyncHTTPClient
 from ..config import BrokleConfig
 from .cache import CacheOptions, PromptCache
 from .exceptions import PromptFetchError, PromptNotFoundError
@@ -135,10 +135,7 @@ class BaseSyncPromptsManager(_BasePromptsManagerMixin):
 
         try:
             raw_response = self._http.get(f"/v1/prompts/{name}", params)
-            data = unwrap_response(
-                raw_response, resource_type="Prompt", identifier=name
-            )
-            return PromptData.from_dict(data)
+            return PromptData.from_dict(raw_response)
         except ValueError as e:
             if "not found" in str(e).lower():
                 raise PromptNotFoundError(
@@ -265,10 +262,7 @@ class BaseSyncPromptsManager(_BasePromptsManagerMixin):
                             params["version"] = options.version
 
                     raw_response = await thread_http.get(f"/v1/prompts/{name}", params)
-                    data = unwrap_response(
-                        raw_response, resource_type="Prompt", identifier=name
-                    )
-                    prompt_data = PromptData.from_dict(data)
+                    prompt_data = PromptData.from_dict(raw_response)
 
                     # Update cache with fresh data
                     self._cache.set(cache_key, prompt_data, ttl)
@@ -314,13 +308,10 @@ class BaseSyncPromptsManager(_BasePromptsManagerMixin):
         try:
             raw_response = self._http.get("/v1/prompts", params)
 
-            if not raw_response.get("success"):
-                error = raw_response.get("error", {})
-                error_msg = error.get("message", "Unknown error")
-                raise PromptFetchError(f"Failed to list prompts: {error_msg}")
-
+            # _http.get raises typed exceptions on 4xx/5xx; success
+            # means raw_response is `{"data": [...], "pagination": {...}}`.
             data = [PromptSummary.from_dict(p) for p in raw_response.get("data", [])]
-            pagination_data = raw_response.get("meta", {}).get("pagination", {})
+            pagination_data = raw_response.get("pagination", {})
             pagination = Pagination(
                 total=pagination_data.get("total", 0),
                 page=pagination_data.get("page", page),
@@ -349,9 +340,11 @@ class BaseSyncPromptsManager(_BasePromptsManagerMixin):
         """
         try:
             raw_response = self._http.post("/v1/prompts", json=request.to_dict())
-            unwrap_response(
-                raw_response, resource_type="Prompt", identifier=request.name
-            )
+            # No-op: raw_response is the created prompt body. We don't
+            # return it (caller is the `create()` void API); just let
+            # it fall out of scope. Errors from the POST would have
+            # raised before we got here.
+            _ = raw_response
 
             # Invalidate cache for this prompt
             self.invalidate(request.name)
@@ -423,10 +416,7 @@ class BaseAsyncPromptsManager(_BasePromptsManagerMixin):
 
         try:
             raw_response = await self._http.get(f"/v1/prompts/{name}", params)
-            data = unwrap_response(
-                raw_response, resource_type="Prompt", identifier=name
-            )
-            return PromptData.from_dict(data)
+            return PromptData.from_dict(raw_response)
         except ValueError as e:
             if "not found" in str(e).lower():
                 raise PromptNotFoundError(
@@ -553,10 +543,7 @@ class BaseAsyncPromptsManager(_BasePromptsManagerMixin):
                             params["version"] = options.version
 
                     raw_response = await thread_http.get(f"/v1/prompts/{name}", params)
-                    data = unwrap_response(
-                        raw_response, resource_type="Prompt", identifier=name
-                    )
-                    prompt_data = PromptData.from_dict(data)
+                    prompt_data = PromptData.from_dict(raw_response)
 
                     # Update cache with fresh data
                     self._cache.set(cache_key, prompt_data, ttl)
@@ -602,13 +589,10 @@ class BaseAsyncPromptsManager(_BasePromptsManagerMixin):
         try:
             raw_response = await self._http.get("/v1/prompts", params)
 
-            if not raw_response.get("success"):
-                error = raw_response.get("error", {})
-                error_msg = error.get("message", "Unknown error")
-                raise PromptFetchError(f"Failed to list prompts: {error_msg}")
-
+            # _http.get raises typed exceptions on 4xx/5xx; success
+            # means raw_response is `{"data": [...], "pagination": {...}}`.
             data = [PromptSummary.from_dict(p) for p in raw_response.get("data", [])]
-            pagination_data = raw_response.get("meta", {}).get("pagination", {})
+            pagination_data = raw_response.get("pagination", {})
             pagination = Pagination(
                 total=pagination_data.get("total", 0),
                 page=pagination_data.get("page", page),
@@ -637,9 +621,11 @@ class BaseAsyncPromptsManager(_BasePromptsManagerMixin):
         """
         try:
             raw_response = await self._http.post("/v1/prompts", json=request.to_dict())
-            unwrap_response(
-                raw_response, resource_type="Prompt", identifier=request.name
-            )
+            # No-op: raw_response is the created prompt body. We don't
+            # return it (caller is the `create()` void API); just let
+            # it fall out of scope. Errors from the POST would have
+            # raised before we got here.
+            _ = raw_response
 
             # Invalidate cache for this prompt
             self.invalidate(request.name)

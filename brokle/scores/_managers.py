@@ -40,7 +40,7 @@ Async Usage:
 
 from typing import Any, Dict, List, Optional, Union
 
-from .._http import AsyncHTTPClient, SyncHTTPClient, unwrap_response
+from .._http import AsyncHTTPClient, SyncHTTPClient
 from ..config import BrokleConfig
 from .exceptions import ScoreError
 from .types import ScoreResult, ScorerProtocol, ScoreSource, ScoreType, ScoreValue
@@ -306,7 +306,7 @@ class ScoresManager(_BaseScoresManagerMixin):
 
         try:
             raw_response = self._http.post("/v1/scores", json=payload)
-            return unwrap_response(raw_response, resource_type="Score")
+            return raw_response
         except ValueError as e:
             raise ScoreError(f"Failed to submit score: {e}")
         except Exception as e:
@@ -347,7 +347,7 @@ class ScoresManager(_BaseScoresManagerMixin):
 
         try:
             raw_response = self._http.post("/v1/scores/batch", json={"scores": scores})
-            return unwrap_response(raw_response, resource_type="Scores")
+            return raw_response
         except ValueError as e:
             raise ScoreError(f"Failed to submit scores batch: {e}")
         except Exception as e:
@@ -534,7 +534,7 @@ class AsyncScoresManager(_BaseScoresManagerMixin):
 
         try:
             raw_response = await self._http.post("/v1/scores", json=payload)
-            return unwrap_response(raw_response, resource_type="Score")
+            return raw_response
         except ValueError as e:
             raise ScoreError(f"Failed to submit score: {e}")
         except Exception as e:
@@ -571,7 +571,7 @@ class AsyncScoresManager(_BaseScoresManagerMixin):
             raw_response = await self._http.post(
                 "/v1/scores/batch", json={"scores": scores}
             )
-            return unwrap_response(raw_response, resource_type="Scores")
+            return raw_response
         except ValueError as e:
             raise ScoreError(f"Failed to submit scores batch: {e}")
         except Exception as e:

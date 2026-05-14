@@ -56,3 +56,6 @@ Use the Makefile for repeatable workflows:
 ## Lessons Learned
 
 - 2026-04-14: The root repo's AGENTS.md documents cross-cutting SDK gotchas (submodule workflow, singleton pattern, optional peer deps). Check it for platform-wide context before making changes.
+
+## Compatibility Notes
+- Backward compatibility is not required yet; there is no production data because the product has not been released.

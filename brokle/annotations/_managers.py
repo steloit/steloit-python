@@ -31,7 +31,7 @@ Async Usage:
 
 from typing import Any, Dict, List, Optional
 
-from .._http import AsyncHTTPClient, SyncHTTPClient, unwrap_response
+from .._http import AsyncHTTPClient, SyncHTTPClient
 from ..config import BrokleConfig
 from .exceptions import (
     AnnotationError,
@@ -170,7 +170,7 @@ class AnnotationQueuesManager(_BaseAnnotationManagerMixin):
                 f"/v1/annotation-queues/{queue_id}/items",
                 json=payload,
             )
-            return unwrap_response(raw_response, resource_type="AnnotationItems")
+            return raw_response
         except Exception as e:
             self._handle_error(e, "add items to queue")
 
@@ -217,7 +217,7 @@ class AnnotationQueuesManager(_BaseAnnotationManagerMixin):
                 f"/v1/annotation-queues/{queue_id}/items",
                 params=params,
             )
-            return unwrap_response(raw_response, resource_type="AnnotationItems")
+            return raw_response
         except Exception as e:
             self._handle_error(e, "list items in queue")
 
@@ -375,7 +375,7 @@ class AsyncAnnotationQueuesManager(_BaseAnnotationManagerMixin):
                 f"/v1/annotation-queues/{queue_id}/items",
                 json=payload,
             )
-            return unwrap_response(raw_response, resource_type="AnnotationItems")
+            return raw_response
         except Exception as e:
             self._handle_error(e, "add items to queue")
 
@@ -413,7 +413,7 @@ class AsyncAnnotationQueuesManager(_BaseAnnotationManagerMixin):
                 f"/v1/annotation-queues/{queue_id}/items",
                 params=params,
             )
-            return unwrap_response(raw_response, resource_type="AnnotationItems")
+            return raw_response
         except Exception as e:
             self._handle_error(e, "list items in queue")
 

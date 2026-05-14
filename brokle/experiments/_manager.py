@@ -35,7 +35,7 @@ from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Dict, List, Optional, Union
 
-from .._http import AsyncHTTPClient, SyncHTTPClient, unwrap_response
+from .._http import AsyncHTTPClient, SyncHTTPClient
 from ..config import BrokleConfig
 from ..datasets.dataset import AsyncDataset, Dataset, DatasetItem
 from ..query.types import QueriedSpan
@@ -497,7 +497,7 @@ class ExperimentsManager(_BaseExperimentsManagerMixin):
 
         try:
             raw_response = self._http.get(f"/v1/experiments/{experiment_id}")
-            data = unwrap_response(raw_response, resource_type="Experiment")
+            data = raw_response
             return Experiment.from_dict(data)
         except ValueError as e:
             raise EvaluationError(f"Failed to get experiment: {e}")
@@ -534,7 +534,7 @@ class ExperimentsManager(_BaseExperimentsManagerMixin):
                 "/v1/experiments",
                 params={"limit": limit, "page": page},
             )
-            data = unwrap_response(raw_response, resource_type="Experiments")
+            data = raw_response["data"]
             return [Experiment.from_dict(exp) for exp in data]
         except ValueError as e:
             raise EvaluationError(f"Failed to list experiments: {e}")
@@ -585,7 +585,7 @@ class ExperimentsManager(_BaseExperimentsManagerMixin):
 
         try:
             raw_response = self._http.post("/v1/experiments/compare", json=payload)
-            data = unwrap_response(raw_response, resource_type="ComparisonResult")
+            data = raw_response
             return ComparisonResult.from_dict(data)
         except ValueError as e:
             raise EvaluationError(f"Failed to compare experiments: {e}")
@@ -644,7 +644,7 @@ class ExperimentsManager(_BaseExperimentsManagerMixin):
                 f"/v1/experiments/{experiment_id}/rerun",
                 json=payload,
             )
-            data = unwrap_response(raw_response, resource_type="Experiment")
+            data = raw_response
             return Experiment.from_dict(data)
         except ValueError as e:
             raise EvaluationError(f"Failed to re-run experiment: {e}")
@@ -655,7 +655,7 @@ class ExperimentsManager(_BaseExperimentsManagerMixin):
         """Fetch dataset by ID."""
         try:
             raw_response = self._http.get(f"/v1/datasets/{dataset_id}")
-            data = unwrap_response(raw_response, resource_type="Dataset")
+            data = raw_response
             return Dataset(
                 id=data["id"],
                 name=data["name"],
@@ -686,7 +686,7 @@ class ExperimentsManager(_BaseExperimentsManagerMixin):
 
         try:
             raw_response = self._http.post("/v1/experiments", json=payload)
-            data = unwrap_response(raw_response, resource_type="Experiment")
+            data = raw_response
             return Experiment.from_dict(data)
         except Exception as e:
             raise EvaluationError(f"Failed to create experiment: {e}")
@@ -749,7 +749,7 @@ class ExperimentsManager(_BaseExperimentsManagerMixin):
 
         try:
             raw_response = self._http.post("/v1/experiments", json=payload)
-            data = unwrap_response(raw_response, resource_type="Experiment")
+            data = raw_response
             return Experiment.from_dict(data)
         except Exception as e:
             raise EvaluationError(f"Failed to create experiment: {e}")
@@ -1122,7 +1122,7 @@ class AsyncExperimentsManager(_BaseExperimentsManagerMixin):
 
         try:
             raw_response = await self._http.get(f"/v1/experiments/{experiment_id}")
-            data = unwrap_response(raw_response, resource_type="Experiment")
+            data = raw_response
             return Experiment.from_dict(data)
         except ValueError as e:
             raise EvaluationError(f"Failed to get experiment: {e}")
@@ -1154,7 +1154,7 @@ class AsyncExperimentsManager(_BaseExperimentsManagerMixin):
                 "/v1/experiments",
                 params={"limit": limit, "page": page},
             )
-            data = unwrap_response(raw_response, resource_type="Experiments")
+            data = raw_response["data"]
             return [Experiment.from_dict(exp) for exp in data]
         except ValueError as e:
             raise EvaluationError(f"Failed to list experiments: {e}")
@@ -1207,7 +1207,7 @@ class AsyncExperimentsManager(_BaseExperimentsManagerMixin):
             raw_response = await self._http.post(
                 "/v1/experiments/compare", json=payload
             )
-            data = unwrap_response(raw_response, resource_type="ComparisonResult")
+            data = raw_response
             return ComparisonResult.from_dict(data)
         except ValueError as e:
             raise EvaluationError(f"Failed to compare experiments: {e}")
@@ -1266,7 +1266,7 @@ class AsyncExperimentsManager(_BaseExperimentsManagerMixin):
                 f"/v1/experiments/{experiment_id}/rerun",
                 json=payload,
             )
-            data = unwrap_response(raw_response, resource_type="Experiment")
+            data = raw_response
             return Experiment.from_dict(data)
         except ValueError as e:
             raise EvaluationError(f"Failed to re-run experiment: {e}")
@@ -1277,7 +1277,7 @@ class AsyncExperimentsManager(_BaseExperimentsManagerMixin):
         """Fetch dataset by ID (async)."""
         try:
             raw_response = await self._http.get(f"/v1/datasets/{dataset_id}")
-            data = unwrap_response(raw_response, resource_type="Dataset")
+            data = raw_response
             return AsyncDataset(
                 id=data["id"],
                 name=data["name"],
@@ -1308,7 +1308,7 @@ class AsyncExperimentsManager(_BaseExperimentsManagerMixin):
 
         try:
             raw_response = await self._http.post("/v1/experiments", json=payload)
-            data = unwrap_response(raw_response, resource_type="Experiment")
+            data = raw_response
             return Experiment.from_dict(data)
         except Exception as e:
             raise EvaluationError(f"Failed to create experiment: {e}")
@@ -1373,7 +1373,7 @@ class AsyncExperimentsManager(_BaseExperimentsManagerMixin):
 
         try:
             raw_response = await self._http.post("/v1/experiments", json=payload)
-            data = unwrap_response(raw_response, resource_type="Experiment")
+            data = raw_response
             return Experiment.from_dict(data)
         except Exception as e:
             raise EvaluationError(f"Failed to create experiment: {e}")

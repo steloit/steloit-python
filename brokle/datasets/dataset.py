@@ -35,12 +35,7 @@ Async Usage:
 from dataclasses import dataclass
 from typing import Any, AsyncIterator, Dict, Iterator, List, Optional, Union
 
-from .._http import (
-    AsyncHTTPClient,
-    SyncHTTPClient,
-    extract_pagination_total,
-    unwrap_response,
-)
+from .._http import AsyncHTTPClient, SyncHTTPClient
 from .exceptions import DatasetError
 
 
@@ -392,7 +387,7 @@ class Dataset:
                 f"/v1/datasets/{self._id}/items",
                 json={"items": normalized, "deduplicate": deduplicate},
             )
-            data = unwrap_response(raw_response, resource_type="DatasetItems")
+            data = raw_response
             return int(data.get("created", len(normalized)))
         except ValueError as e:
             raise DatasetError(f"Failed to insert items: {e}")
@@ -431,7 +426,7 @@ class Dataset:
                 f"/v1/datasets/{self._id}/items",
                 params={"limit": limit, "page": page},
             )
-            data = unwrap_response(raw_response, resource_type="DatasetItems")
+            data = raw_response["data"]
             return [DatasetItem.from_dict(item) for item in data]
         except ValueError as e:
             raise DatasetError(f"Failed to fetch items: {e}")
@@ -474,7 +469,7 @@ class Dataset:
                 f"/v1/datasets/{self._id}/items",
                 params={"limit": 1, "page": 1},
             )
-            return extract_pagination_total(raw_response)
+            return int(raw_response.get("pagination", {}).get("total", 0))
         except Exception:
             return 0
 
@@ -626,7 +621,7 @@ class Dataset:
                 f"/v1/datasets/{self._id}/items/from-traces",
                 json=payload,
             )
-            data = unwrap_response(raw_response, resource_type="BulkImport")
+            data = raw_response
             return BulkImportResult.from_dict(data)
         except Exception as e:
             raise DatasetError(f"Failed to create items from traces: {e}")
@@ -671,7 +666,7 @@ class Dataset:
                 f"/v1/datasets/{self._id}/items/from-spans",
                 json=payload,
             )
-            data = unwrap_response(raw_response, resource_type="BulkImport")
+            data = raw_response
             return BulkImportResult.from_dict(data)
         except Exception as e:
             raise DatasetError(f"Failed to create items from spans: {e}")
@@ -700,7 +695,7 @@ class Dataset:
                 f"/v1/datasets/{self._id}/items/import-json",
                 json=payload,
             )
-            data = unwrap_response(raw_response, resource_type="BulkImport")
+            data = raw_response
             return BulkImportResult.from_dict(data)
         except Exception as e:
             raise DatasetError(f"Failed to import items: {e}")
@@ -765,7 +760,7 @@ class Dataset:
                 f"/v1/datasets/{self._id}/items/import-csv",
                 json=payload,
             )
-            data = unwrap_response(raw_response, resource_type="BulkImport")
+            data = raw_response
             return BulkImportResult.from_dict(data)
         except FileNotFoundError:
             raise
@@ -838,7 +833,7 @@ class Dataset:
             raw_response = self._http.get(
                 f"/v1/datasets/{self._id}/items/export",
             )
-            data = unwrap_response(raw_response, resource_type="DatasetItems")
+            data = raw_response
             return data
         except Exception as e:
             raise DatasetError(f"Failed to export items: {e}")
@@ -887,7 +882,7 @@ class Dataset:
                 f"/v1/datasets/{self._id}/versions",
                 json=payload,
             )
-            data = unwrap_response(raw_response, resource_type="DatasetVersion")
+            data = raw_response
             return DatasetVersion.from_dict(data)
         except Exception as e:
             raise DatasetError(f"Failed to create version: {e}")
@@ -913,7 +908,7 @@ class Dataset:
             raw_response = self._http.get(
                 f"/v1/datasets/{self._id}/versions",
             )
-            data = unwrap_response(raw_response, resource_type="DatasetVersions")
+            data = raw_response.get("data", [])
             if isinstance(data, list):
                 return [DatasetVersion.from_dict(v) for v in data]
             return []
@@ -943,7 +938,7 @@ class Dataset:
             raw_response = self._http.get(
                 f"/v1/datasets/{self._id}/versions/{version_id}",
             )
-            data = unwrap_response(raw_response, resource_type="DatasetVersion")
+            data = raw_response
             return DatasetVersion.from_dict(data)
         except Exception as e:
             raise DatasetError(f"Failed to get version: {e}")
@@ -982,7 +977,7 @@ class Dataset:
                 f"/v1/datasets/{self._id}/versions/{version_id}/items",
                 params={"limit": limit, "offset": offset},
             )
-            data = unwrap_response(raw_response, resource_type="DatasetItems")
+            data = raw_response
             items_data = data.get("items", [])
             return [DatasetItem.from_dict(item) for item in items_data]
         except Exception as e:
@@ -1019,7 +1014,7 @@ class Dataset:
                 f"/v1/datasets/{self._id}/pin",
                 json=payload,
             )
-            data = unwrap_response(raw_response, resource_type="Dataset")
+            data = raw_response
             # Return updated dataset
             return Dataset(
                 id=data["id"],
@@ -1057,7 +1052,7 @@ class Dataset:
             raw_response = self._http.get(
                 f"/v1/datasets/{self._id}/info",
             )
-            data = unwrap_response(raw_response, resource_type="DatasetWithVersionInfo")
+            data = raw_response
             return DatasetWithVersionInfo.from_dict(data)
         except Exception as e:
             raise DatasetError(f"Failed to get dataset info: {e}")
@@ -1202,7 +1197,7 @@ class AsyncDataset:
                 f"/v1/datasets/{self._id}/items",
                 json={"items": normalized, "deduplicate": deduplicate},
             )
-            data = unwrap_response(raw_response, resource_type="DatasetItems")
+            data = raw_response
             return int(data.get("created", len(normalized)))
         except ValueError as e:
             raise DatasetError(f"Failed to insert items: {e}")
@@ -1241,7 +1236,7 @@ class AsyncDataset:
                 f"/v1/datasets/{self._id}/items",
                 params={"limit": limit, "page": page},
             )
-            data = unwrap_response(raw_response, resource_type="DatasetItems")
+            data = raw_response["data"]
             return [DatasetItem.from_dict(item) for item in data]
         except ValueError as e:
             raise DatasetError(f"Failed to fetch items: {e}")
@@ -1283,7 +1278,7 @@ class AsyncDataset:
                 f"/v1/datasets/{self._id}/items",
                 params={"limit": 1, "page": 1},
             )
-            return extract_pagination_total(raw_response)
+            return int(raw_response.get("pagination", {}).get("total", 0))
         except Exception:
             return 0
 
@@ -1439,7 +1434,7 @@ class AsyncDataset:
                 f"/v1/datasets/{self._id}/items/from-traces",
                 json=payload,
             )
-            data = unwrap_response(raw_response, resource_type="BulkImport")
+            data = raw_response
             return BulkImportResult.from_dict(data)
         except Exception as e:
             raise DatasetError(f"Failed to create items from traces: {e}")
@@ -1484,7 +1479,7 @@ class AsyncDataset:
                 f"/v1/datasets/{self._id}/items/from-spans",
                 json=payload,
             )
-            data = unwrap_response(raw_response, resource_type="BulkImport")
+            data = raw_response
             return BulkImportResult.from_dict(data)
         except Exception as e:
             raise DatasetError(f"Failed to create items from spans: {e}")
@@ -1513,7 +1508,7 @@ class AsyncDataset:
                 f"/v1/datasets/{self._id}/items/import-json",
                 json=payload,
             )
-            data = unwrap_response(raw_response, resource_type="BulkImport")
+            data = raw_response
             return BulkImportResult.from_dict(data)
         except Exception as e:
             raise DatasetError(f"Failed to import items: {e}")
@@ -1578,7 +1573,7 @@ class AsyncDataset:
                 f"/v1/datasets/{self._id}/items/import-csv",
                 json=payload,
             )
-            data = unwrap_response(raw_response, resource_type="BulkImport")
+            data = raw_response
             return BulkImportResult.from_dict(data)
         except FileNotFoundError:
             raise
@@ -1651,7 +1646,7 @@ class AsyncDataset:
             raw_response = await self._http.get(
                 f"/v1/datasets/{self._id}/items/export",
             )
-            data = unwrap_response(raw_response, resource_type="DatasetItems")
+            data = raw_response
             return data
         except Exception as e:
             raise DatasetError(f"Failed to export items: {e}")
@@ -1700,7 +1695,7 @@ class AsyncDataset:
                 f"/v1/datasets/{self._id}/versions",
                 json=payload,
             )
-            data = unwrap_response(raw_response, resource_type="DatasetVersion")
+            data = raw_response
             return DatasetVersion.from_dict(data)
         except Exception as e:
             raise DatasetError(f"Failed to create version: {e}")
@@ -1726,7 +1721,7 @@ class AsyncDataset:
             raw_response = await self._http.get(
                 f"/v1/datasets/{self._id}/versions",
             )
-            data = unwrap_response(raw_response, resource_type="DatasetVersions")
+            data = raw_response.get("data", [])
             if isinstance(data, list):
                 return [DatasetVersion.from_dict(v) for v in data]
             return []
@@ -1756,7 +1751,7 @@ class AsyncDataset:
             raw_response = await self._http.get(
                 f"/v1/datasets/{self._id}/versions/{version_id}",
             )
-            data = unwrap_response(raw_response, resource_type="DatasetVersion")
+            data = raw_response
             return DatasetVersion.from_dict(data)
         except Exception as e:
             raise DatasetError(f"Failed to get version: {e}")
@@ -1795,7 +1790,7 @@ class AsyncDataset:
                 f"/v1/datasets/{self._id}/versions/{version_id}/items",
                 params={"limit": limit, "offset": offset},
             )
-            data = unwrap_response(raw_response, resource_type="DatasetItems")
+            data = raw_response
             items_data = data.get("items", [])
             return [DatasetItem.from_dict(item) for item in items_data]
         except Exception as e:
@@ -1832,7 +1827,7 @@ class AsyncDataset:
                 f"/v1/datasets/{self._id}/pin",
                 json=payload,
             )
-            data = unwrap_response(raw_response, resource_type="Dataset")
+            data = raw_response
             # Return updated dataset
             return AsyncDataset(
                 id=data["id"],
@@ -1870,7 +1865,7 @@ class AsyncDataset:
             raw_response = await self._http.get(
                 f"/v1/datasets/{self._id}/info",
             )
-            data = unwrap_response(raw_response, resource_type="DatasetWithVersionInfo")
+            data = raw_response
             return DatasetWithVersionInfo.from_dict(data)
         except Exception as e:
             raise DatasetError(f"Failed to get dataset info: {e}")

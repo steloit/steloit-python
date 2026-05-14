@@ -34,13 +34,16 @@ Types:
     - SpanEvent: Event attached to a span
 
 Errors:
-    - QueryError: Base error for query operations
-    - InvalidFilterError: Filter syntax is invalid
-    - QueryAPIError: API request failed
+    - InvalidFilterError: Filter-parser rejected the expression (422).
+      Subclass of the shared-client `ValidationError` so `except
+      ValidationError` catches it too. Every other failure (auth,
+      network, 5xx, rate limit, not found) propagates as the shared
+      `BrokleError` subclass the HTTP client raised — `except
+      BrokleError` catches them all.
 """
 
 from ._managers import AsyncQueryManager, QueryManager
-from .exceptions import InvalidFilterError, QueryAPIError, QueryError
+from .exceptions import InvalidFilterError
 from .types import QueriedSpan, QueryResult, SpanEvent, TokenUsage, ValidationResult
 
 __all__ = [
@@ -54,7 +57,5 @@ __all__ = [
     "QueryManager",
     "AsyncQueryManager",
     # Errors
-    "QueryError",
     "InvalidFilterError",
-    "QueryAPIError",
 ]

@@ -132,59 +132,6 @@ def _check_response_status(
     )
 
 
-def unwrap_response(
-    response: Dict[str, Any],
-    resource_type: str,
-    identifier: Optional[str] = None,
-) -> Any:
-    """
-    Unwrap Brokle API envelope.
-
-    Args:
-        response: API response
-        resource_type: Expected resource type
-        identifier: Optional identifier for error messages
-
-    Returns:
-        Unwrapped data from response["data"]
-
-    Raises:
-        ValidationError: If response format is invalid
-        KeyError: If required fields are missing
-    """
-    if not response.get("success"):
-        error = response.get("error", {})
-        error_msg = error.get("message", "Unknown error")
-        # Use enhanced error for validation-style failures
-        raise ValidationError(
-            f"{resource_type}{f' {identifier!r}' if identifier else ''}: {error_msg}",
-            hint="Check the request parameters and try again.",
-            details={"resource_type": resource_type, "identifier": identifier, "error": error},
-        )
-
-    return response["data"]
-
-
-def extract_pagination_total(response: Dict[str, Any]) -> int:
-    """
-    Extract total count from paginated API response.
-
-    The API returns pagination info in meta.pagination.total.
-
-    Args:
-        response: Raw API response (before unwrap)
-
-    Returns:
-        Total count from pagination, or 0 if not available
-    """
-    if not response.get("success"):
-        return 0
-
-    meta = response.get("meta", {})
-    pagination = meta.get("pagination", {})
-    return pagination.get("total", 0)
-
-
 class SyncHTTPClient:
     """
     Synchronous HTTP client for Brokle API.

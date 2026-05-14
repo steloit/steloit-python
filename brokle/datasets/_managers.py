@@ -28,7 +28,7 @@ Async Usage:
 
 from typing import Any, Dict, List, Optional
 
-from .._http import AsyncHTTPClient, SyncHTTPClient, unwrap_response
+from .._http import AsyncHTTPClient, SyncHTTPClient
 from ..config import BrokleConfig
 from .dataset import AsyncDataset, Dataset
 from .exceptions import DatasetError
@@ -128,7 +128,7 @@ class DatasetsManager(_BaseDatasetsManagerMixin):
 
         try:
             raw_response = self._http.post("/v1/datasets", json=payload)
-            data = unwrap_response(raw_response, resource_type="Dataset")
+            data = raw_response
             return Dataset(
                 id=data["id"],
                 name=data["name"],
@@ -166,7 +166,7 @@ class DatasetsManager(_BaseDatasetsManagerMixin):
 
         try:
             raw_response = self._http.get(f"/v1/datasets/{dataset_id}")
-            data = unwrap_response(raw_response, resource_type="Dataset")
+            data = raw_response
             return Dataset(
                 id=data["id"],
                 name=data["name"],
@@ -212,7 +212,7 @@ class DatasetsManager(_BaseDatasetsManagerMixin):
                 "/v1/datasets",
                 params={"limit": limit, "page": page},
             )
-            data = unwrap_response(raw_response, resource_type="Datasets")
+            data = raw_response["data"]
             return [
                 Dataset(
                     id=ds["id"],
@@ -275,7 +275,7 @@ class DatasetsManager(_BaseDatasetsManagerMixin):
 
         try:
             raw_response = self._http.patch(f"/v1/datasets/{dataset_id}", json=payload)
-            data = unwrap_response(raw_response, resource_type="Dataset")
+            data = raw_response
             return Dataset(
                 id=data["id"],
                 name=data["name"],
@@ -307,12 +307,10 @@ class DatasetsManager(_BaseDatasetsManagerMixin):
         self._log(f"Deleting dataset: {dataset_id}")
 
         try:
-            raw_response = self._http.delete(f"/v1/datasets/{dataset_id}")
-            # None means 204 No Content (success), only check for error if response exists
-            if raw_response is not None and not raw_response.get("success", False):
-                error = raw_response.get("error", {})
-                error_msg = error.get("message", "Unknown error")
-                raise DatasetError(f"Failed to delete dataset: {error_msg}")
+            # _http.delete raises typed exceptions on 4xx/5xx. A
+            # successful return (None for 204, body for 200) means
+            # the dataset was deleted.
+            self._http.delete(f"/v1/datasets/{dataset_id}")
         except DatasetError:
             raise
         except Exception as e:
@@ -388,7 +386,7 @@ class AsyncDatasetsManager(_BaseDatasetsManagerMixin):
 
         try:
             raw_response = await self._http.post("/v1/datasets", json=payload)
-            data = unwrap_response(raw_response, resource_type="Dataset")
+            data = raw_response
             return AsyncDataset(
                 id=data["id"],
                 name=data["name"],
@@ -426,7 +424,7 @@ class AsyncDatasetsManager(_BaseDatasetsManagerMixin):
 
         try:
             raw_response = await self._http.get(f"/v1/datasets/{dataset_id}")
-            data = unwrap_response(raw_response, resource_type="Dataset")
+            data = raw_response
             return AsyncDataset(
                 id=data["id"],
                 name=data["name"],
@@ -472,7 +470,7 @@ class AsyncDatasetsManager(_BaseDatasetsManagerMixin):
                 "/v1/datasets",
                 params={"limit": limit, "page": page},
             )
-            data = unwrap_response(raw_response, resource_type="Datasets")
+            data = raw_response["data"]
             return [
                 AsyncDataset(
                     id=ds["id"],
@@ -537,7 +535,7 @@ class AsyncDatasetsManager(_BaseDatasetsManagerMixin):
             raw_response = await self._http.patch(
                 f"/v1/datasets/{dataset_id}", json=payload
             )
-            data = unwrap_response(raw_response, resource_type="Dataset")
+            data = raw_response
             return AsyncDataset(
                 id=data["id"],
                 name=data["name"],
@@ -569,12 +567,10 @@ class AsyncDatasetsManager(_BaseDatasetsManagerMixin):
         self._log(f"Deleting dataset: {dataset_id}")
 
         try:
-            raw_response = await self._http.delete(f"/v1/datasets/{dataset_id}")
-            # None means 204 No Content (success), only check for error if response exists
-            if raw_response is not None and not raw_response.get("success", False):
-                error = raw_response.get("error", {})
-                error_msg = error.get("message", "Unknown error")
-                raise DatasetError(f"Failed to delete dataset: {error_msg}")
+            # _http.delete raises typed exceptions on 4xx/5xx. A
+            # successful return (None for 204, body for 200) means
+            # the dataset was deleted.
+            await self._http.delete(f"/v1/datasets/{dataset_id}")
         except DatasetError:
             raise
         except Exception as e:

@@ -40,13 +40,18 @@ def mock_async_client():
 
 
 def make_success_response(content: str) -> dict:
-    """Create a standard success response from playground."""
-    return {"success": True, "data": {"response": {"content": content}}}
+    """Playground success response — raw body, no envelope."""
+    return {"response": {"content": content}}
 
 
-def make_error_response(message: str = "Unknown error") -> dict:
-    """Create an error response."""
-    return {"success": False, "error": {"message": message}}
+def make_error_response(message: str = "Unknown error") -> Exception:
+    """Error path is now an exception raised by the HTTP client, not
+    a response body. Tests that used make_error_response as a mock
+    return_value should switch to mock.side_effect.
+    """
+    from brokle._http.errors import BrokleError
+
+    return BrokleError(message, hint="Mock playground error for tests.")
 
 
 # =============================================================================
@@ -483,20 +488,20 @@ class TestErrorHandling:
 
     def test_http_error_returns_failed(self, mock_client):
         scorer = LLMScorer(client=mock_client, name="test", prompt="{{output}}")
-        mock_client._http.post.return_value = make_error_response("Server error")
+        # HTTP errors now raise typed exceptions from the HTTP client;
+        # the scorer catches them and returns scoring_failed instead of
+        # re-raising.
+        mock_client._http.post.side_effect = make_error_response("Server error")
 
         result = scorer(output="test")
 
         assert result.scoring_failed is True
         assert result.value == 0.0
-        assert "Playground execution failed" in result.reason
+        assert "Server error" in result.reason
 
     def test_empty_response_returns_failed(self, mock_client):
         scorer = LLMScorer(client=mock_client, name="test", prompt="{{output}}")
-        mock_client._http.post.return_value = {
-            "success": True,
-            "data": {"response": {"content": ""}},
-        }
+        mock_client._http.post.return_value = {"response": {"content": ""}}
 
         result = scorer(output="test")
 
@@ -505,10 +510,7 @@ class TestErrorHandling:
 
     def test_missing_content_returns_failed(self, mock_client):
         scorer = LLMScorer(client=mock_client, name="test", prompt="{{output}}")
-        mock_client._http.post.return_value = {
-            "success": True,
-            "data": {"response": {}},
-        }
+        mock_client._http.post.return_value = {"response": {}}
 
         result = scorer(output="test")
 

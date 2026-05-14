@@ -277,8 +277,11 @@ class Brokle(BaseBrokleClient):
             ...     print("Connected!")
         """
         try:
-            response = self._http.post("/v1/auth/validate-key", json={})
-            return response.get("success", False)
+            # _http.post raises typed exceptions on 4xx/5xx (bad key →
+            # AuthenticationError, network failure → ConnectionError,
+            # etc.). Reaching here means the backend validated the key.
+            self._http.post("/v1/auth/validate-key", json={})
+            return True
         except Exception:
             return False
 
@@ -530,8 +533,14 @@ class AsyncBrokle(BaseBrokleClient):
             ...     print("Connected!")
         """
         try:
-            response = await self._http.post("/v1/auth/validate-key", json={})
-            return response.get("success", False)
+            # _http.post raises typed exceptions on 4xx/5xx (bad key →
+            # AuthenticationError, network failure → ConnectionError,
+            # etc.). Reaching here means the backend validated the key —
+            # matches the sync auth_check contract above. The raw body
+            # has no `success` flag under the Stripe/OpenAI-style wire
+            # contract; HTTP status is the signal.
+            await self._http.post("/v1/auth/validate-key", json={})
+            return True
         except Exception:
             return False
 

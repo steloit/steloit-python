@@ -298,30 +298,23 @@ class LLMScorer:
         }
 
     def _execute_llm(self, payload: Dict[str, Any]) -> Dict[str, Any]:
-        """Execute LLM call via backend (sync)."""
-        # Uses SDK route with API key auth (not dashboard route which requires JWT)
+        """Execute LLM call via backend (sync).
+
+        Uses the SDK route with API-key auth (not the dashboard JWT route).
+        The HTTP client raises typed exceptions on 4xx/5xx before we get
+        here, so a successful return means we have the raw execution
+        result body.
+        """
         http_client = self.client._http
-        response = http_client.post("/v1/playground/execute", json=payload)
-
-        if not response.get("success"):
-            error = response.get("error", {})
-            error_msg = error.get("message", "Unknown error")
-            raise Exception(f"Playground execution failed: {error_msg}")
-
-        return response.get("data", {})
+        return http_client.post("/v1/playground/execute", json=payload)
 
     async def _execute_llm_async(self, payload: Dict[str, Any]) -> Dict[str, Any]:
-        """Execute LLM call via backend (async)."""
-        # Uses SDK route with API key auth (not dashboard route which requires JWT)
+        """Execute LLM call via backend (async).
+
+        See ``_execute_llm`` for wire-contract details.
+        """
         http_client = self.client._http
-        response = await http_client.post("/v1/playground/execute", json=payload)
-
-        if not response.get("success"):
-            error = response.get("error", {})
-            error_msg = error.get("message", "Unknown error")
-            raise Exception(f"Playground execution failed: {error_msg}")
-
-        return response.get("data", {})
+        return await http_client.post("/v1/playground/execute", json=payload)
 
     def _parse_response(
         self, response: Dict[str, Any]
